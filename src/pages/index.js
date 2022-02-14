@@ -1,7 +1,10 @@
+import { useRouter } from "next/router";
 import { Button, Card, Container, Grid } from "semantic-ui-react";
 
 export default function HomePage({ tasks }) {
-  if (0 === 0)
+  const router = useRouter();
+
+  if (tasks.length === 0)
     return (
       <Grid
         centered
@@ -28,7 +31,7 @@ export default function HomePage({ tasks }) {
 
   // Render a list of tasks
   return (
-    <Container>
+    <Container style={{ padding: "20px" }}>
       <Card.Group itemsPerRow={4}>
         {tasks.map((task) => (
           <Card key={task._id}>
@@ -37,7 +40,9 @@ export default function HomePage({ tasks }) {
               <p>{task.description}</p>
             </Card.Content>
             <Card.Content extra>
-              <Button primary>View</Button>
+              <Button primary onClick={() => router.push(`/tasks/${task._id}`)}>
+                View
+              </Button>
               <Button primary>Edit</Button>
             </Card.Content>
           </Card>
