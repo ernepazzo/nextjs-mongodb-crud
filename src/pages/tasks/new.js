@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Form, Grid, GridColumn } from "semantic-ui-react";
 
 export default function TaskFormPage() {
@@ -12,7 +12,7 @@ export default function TaskFormPage() {
     description: "",
   });
 
-  const router = useRouter();
+  const { query, push } = useRouter();
 
   const validate = () => {
     const errors = {};
@@ -29,8 +29,13 @@ export default function TaskFormPage() {
 
     if (Object.keys(errors).length) return setErrors(errors);
 
-    await createTask();
-    await router.push("/");
+    if (query.id) {
+      await updateTask();
+    } else {
+      await createTask();
+    }
+
+    await push("/");
   };
 
   const createTask = async () => {
@@ -47,11 +52,35 @@ export default function TaskFormPage() {
     }
   };
 
+  const updateTask = async () => {
+    try {
+      await fetch(`http://localhost:3000/api/tasks/${query.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newTask),
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const handleChange = (e) =>
     setNewTask({
       ...newTask,
       [e.target.name]: e.target.value,
     });
+
+  const getTask = async () => {
+    const res = await fetch(`http://localhost:3000/api/tasks/${query.id}`);
+    const data = await res.json();
+    setNewTask({ title: data.title, description: data.description });
+  };
+
+  useEffect(() => {
+    if (query.id) getTask();
+  }, []);
 
   return (
     <Grid
@@ -62,7 +91,7 @@ export default function TaskFormPage() {
     >
       <Grid.Row>
         <GridColumn textAlign="center">
-          <h1>Create Task</h1>
+          <h1>{query.id ? "Update Task" : "Create Task"}</h1>
           <Form onSubmit={handleSubmit}>
             <Form.Input
               label="Title"
@@ -74,6 +103,7 @@ export default function TaskFormPage() {
                   ? { content: "Please enter a title", pointing: "below" }
                   : null
               }
+              value={newTask.title}
             />
             <Form.TextArea
               label="Description"
@@ -85,9 +115,10 @@ export default function TaskFormPage() {
                   ? { content: errors.description, pointing: "below" }
                   : null
               }
+              value={newTask.description}
             />
 
-            <Button primary>Save</Button>
+            <Button primary>{query.id ? "Update" : "Create"}</Button>
           </Form>
         </GridColumn>
       </Grid.Row>
